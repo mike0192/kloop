@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog, Events, and News</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .section:hover {
+            background-color: #f0f0f0;
+        }
+        .section-content {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .section.active .section-content {
+            display: block;
+        }
+        .image {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section" id="blog-section">
+            <h1>Blog Posts</h1>
+            <div class="section-content">
+                <ul>
+                    {% for post in blog_posts %}
+                        <li>{{ post.title }} - {{ post.content }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section" id="events-section">
+            <h1>Events</h1>
+            <div class="section-content">
+                <ul>
+                    {% for event in events %}
+                        <li>
+                            <div>{{ event.title }} - {{ event.description }} - {{ event.date }} - {{ event.location }}</div>
+                            {% if event.image_path %}
+                                <img src="{{ url_for('static', filename=event.image_path) }}" alt="Event Image" class="image">
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section" id="news-section">
+            <h1>News Articles</h1>
+            <div class="section-content">
+                <ul>
+                    {% for article in news_articles %}
+                        <li>
+                            <div>{{ article.title }} - {{ article.content }} - {{ article.published_date }}</div>
+                            {% if article.image_path %}
+                                <img src="{{ url_for('static', filename=article.image_path) }}" alt="Article Image" class="image">
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSectionContent(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('active');
+        }
+
+        document.getElementById('blog-section').addEventListener('click', () => {
+            toggleSectionContent('blog-section');
+        });
+        document.getElementById('events-section').addEventListener('click', () => {
+            toggleSectionContent('events-section');
+        });
+        document.getElementById('news-section').addEventListener('click', () => {
+            toggleSectionContent('news-section');
+        });        
+    </script>
+</body>
+</html>

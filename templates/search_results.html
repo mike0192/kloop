@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet">
+    <style>
+        body {
+            background: white;
+            font-family: 'Poppins', sans-serif;
+        }
+        .navbar-default {
+            background-color: #11474D;
+            border-color: #11474D;
+        }
+        .navbar-default .navbar-brand {
+            color: white;
+        }
+        .navbar-default .navbar-nav>li>a {
+            color: white;
+        }
+        .navbar-default .navbar-nav>li>a:hover,
+        .navbar-default .navbar-nav>li>a:focus {
+            background-color: #0A2C2F;
+            color: white;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .table th {
+            color: white;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+        .table td {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            margin-top: 10px;
+        }
+        .navbar-right {
+            margin-right: 20px;
+        }
+        .navbar-right a {
+            color: white;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    <img src="path/to/your/AMCO.png" alt="Logo" height="30">
+                </a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="/home">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+                <li><a href="/prod">Products</a></li>
+                <li><a href="#">Portfolio</a></li>
+                <li><a href="/">Vacancy</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/lagin"><span class="glyphicon glyphicon-user"></span></a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Search Results for "{{ search_term }}"</h1>
+        
+        {% if jobs %}
+        <h2>Jobs Found</h2>
+        {% for job in jobs %}
+        <div class="job">
+            <h3>{{ job.title }}</h3>
+            <p>{{ job.description }}</p>
+            <p>{{ job.requirements }}</p>
+            <a href="{{ url_for('apply', job_id=job.id) }}">Apply</a>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="no-jobs">No jobs found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

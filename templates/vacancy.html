@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AMCO</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar-default {
+            background-color: #11474D;
+            border-color: #11474D;
+        }
+        .navbar-default .navbar-brand {
+            color: white;
+        }
+        .navbar-default .navbar-nav>li>a {
+            color: white;
+        }
+        .navbar-default .navbar-nav>li>a:hover,
+        .navbar-default .navbar-nav>li>a:focus {
+            background-color: #0A2C2F;
+            color: white;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 50px;
+        }
+        form {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #11474D;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover {
+            background-color: #0A2C2F;
+        }
+        .job {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    <img src="path/to/your/AMCO.png" alt="Logo" height="30">
+                </a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="/home">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+                <li><a href="/prod">Products</a></li>
+                <li><a href="#">Portfolio</a></li>
+                <li><a href="/">Vacancy</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/lagin"><span class="glyphicon glyphicon-user"></span></a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Job Vacancies</h1>
+
+        <form action="{{ url_for('search') }}" method="post">
+            <input type="text" name="search_term" placeholder="Search by title">
+            <button type="submit">Search</button>
+        </form>
+
+        <h2>All Jobs</h2>
+        {% for job in jobs %}
+        <div class="job">
+            <h3>{{ job.title }}</h3>
+            <p>{{ job.description }}</p>
+            <p>{{ job.requirements }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
