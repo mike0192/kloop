@@ -10,25 +10,96 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f2f2f2;
-            margin: 0;
-            padding: 0;
-        }
-        .navbar-default {
-            background-color: #11474D;
-            border-color: #11474D;
-        }
-        .navbar-default .navbar-brand {
-            color: white;
-        }
-        .navbar-default .navbar-nav>li>a {
-            color: white;
-        }
-        .navbar-default .navbar-nav>li>a:hover,
-        .navbar-default .navbar-nav>li>a:focus {
-            background-color: #0A2C2F;
-            color: white;
-        }
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+            .max-width,
+            .servicecontent,
+            .card1,
+            .box,
+            h1,
+            p,
+            nav ul li a {
+              font-family: 'Poppins', sans-serif;
+            }
+            .navbar-brand {
+                padding: 0;
+                height: auto;
+            }
+            
+            .navbar-brand img {
+                height: 50px; /* Adjust this value to your desired logo height */
+                display: block;
+                margin: 5px 0; /* Add some vertical margin to center the logo vertically */
+            }
+            
+            nav ul {
+              display: flex;
+              gap: 30px;
+              align-items: center;
+            }
+            
+            nav ul li {
+              list-style-type: none;
+            }
+            
+            nav ul li a {
+              text-decoration: none;
+              color: #fff;
+              font-size: 20px;
+              position: relative;
+              left: 10px;
+            }
+            
+            nav ul li a:hover {
+              color: black;
+            }
+            .navbar-default {
+                background-color: #11474D;
+                border-color: #11474D;
+                margin-bottom: 0;
+                border-radius: 0;
+            }
+                  
+                  .menu-icon{
+                    display: none;
+                  }
+                  
+                  .menu-icon i{
+                    color: #fff;
+                    font-size: 30px;
+                  }
+                  
+                  @media (max-width:820px) {
+                    nav ul{
+                        position: absolute;
+                        top: 70px;
+                        left: 0;
+                        right: 0;
+                        flex-direction: column;
+                        text-align: center;
+                        background-color: #00a7ff;
+                        z-index: 7;
+                        gap: 0;
+                        overflow: hidden;
+                    }
+                    nav ul li{
+                        padding: 4px;
+                        height: 900px;
+                        padding-top: 0;
+                       color: transparent;
+                    }
+                    .menu-icon{
+                        display: block;
+                    }
+                    #menuList{
+                        transition: all 0.5s;
+                    }
+                  
+                    .header{
+                      z-index: 10;
+                    }
+                  }
+                }
         .container {
             margin-top: 20px;
         }
@@ -79,15 +150,15 @@
         <div class="container-fluid">
             <div class="navbar-header">
                 <a class="navbar-brand" href="#">
-                    <img src="path/to/your/AMCO.png" alt="Logo" height="30">
+                    <img src="/static/images/logo.png" alt="Logo" height="50">
                 </a>
             </div>
             <ul class="nav navbar-nav">
                 <li><a href="/home">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Contact</a></li>
+                <li><a href="/home">About</a></li>
+                <li><a href="/home">Contact</a></li>
                 <li><a href="/prod">Products</a></li>
-                <li><a href="#">Portfolio</a></li>
+                <li><a href="/home">Portfolio</a></li>
                 <li><a href="/">Vacancy</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">

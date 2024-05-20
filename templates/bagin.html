@@ -150,7 +150,7 @@
                 <li><a href="/vacancy">Vacancy</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="/lagin"><span class="glyphicon glyphicon-user"></span></a></li>
+                <li><a href="/bagin"><span class="glyphicon glyphicon-user"></span></a></li>
             </ul>
         </div>
     </nav>
@@ -159,7 +159,7 @@
         {% if error %}
             <p class="error-message">{{ error }}</p>
         {% endif %}
-        <form method="post" action="{{ url_for('lagin') }}">
+        <form method="post" action="{{ url_for('bagin') }}">
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>

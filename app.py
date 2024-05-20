@@ -18,13 +18,119 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+class ActionHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    entity_type = db.Column(db.String(50))
+    entity_id = db.Column(db.Integer)
+    action = db.Column(db.String(50))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    details = db.Column(db.Text)
+
+    def __init__(self, entity_type, entity_id, action, details):
+        self.entity_type = entity_type
+        self.entity_id = entity_id
+        self.action = action
+        self.details = details
+
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
     image = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    likes = db.Column(db.Integer, default=0)
+
+    def log_action(self, action, details):
+        log_entry = ActionHistory(
+            entity_type='Product',
+            entity_id=self.id,
+            action=action,
+            details=details
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+
+class AppliedJob(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, nullable=False)
+    first_name = db.Column(db.String(100), nullable=False)
+    father_name = db.Column(db.String(100), nullable=False)
+    applicant_email = db.Column(db.String(100), nullable=False)
+    gender = db.Column(db.String(10), nullable=True)
+    age = db.Column(db.Integer, nullable=True)
+    cv_path = db.Column(db.String(100), nullable=True)
+
+    def log_action(self, action, details):
+        log_entry = ActionHistory(
+            entity_type='AppliedJob',
+            entity_id=self.id,
+            action=action,
+            details=details
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+
+class BlogPost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+
+    def log_action(self, action, details):
+        log_entry = ActionHistory(
+            entity_type='BlogPost',
+            entity_id=self.id,
+            action=action,
+            details=details
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+
+    def log_action(self, action, details):
+        log_entry = ActionHistory(
+            entity_type='Event',
+            entity_id=self.id,
+            action=action,
+            details=details
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+
+class NewsArticle(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    
+    def log_action(self, action, details):
+        log_entry = ActionHistory(
+            entity_type='NewsArticle',
+            entity_id=self.id,
+            action=action,
+            details=details
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(500), nullable=False)
+    requirements = db.Column(db.String(500), nullable=False)
+    deadline = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+
+    def __init__(self, *args, **kwargs):
+        super(Job, self).__init__(*args, **kwargs)
+        self.check_availability()
+
+    def check_availability(self):
+        if self.deadline and self.deadline < datetime.now():
+            self.is_active = False
+            db.session.commit()
 
     def serialize(self):
         return {
@@ -34,6 +140,18 @@ class Product(db.Model):
             'image': self.image,
             'description': self.description,
         }
+
+    def log_action(self, action, details):
+        log_entry = ActionHistory(
+            entity_type='Job',
+            entity_id=self.id,
+            action=action,
+            details=details
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+
+@app.route('/')
 @app.route('/home')
 def home():
     return render_template('home.html')
@@ -72,6 +190,9 @@ def add_product():
         new_product = Product(name=name, price=price, image=filename, description=description)
         db.session.add(new_product)
         db.session.commit()
+        
+        new_product.log_action('Added', f"Product '{name}' added successfully.")
+
         flash('Product added successfully.', 'success')
         return redirect(url_for('admin'))
     return render_template('add_product.html')
@@ -95,6 +216,10 @@ def edit_product(product_id):
                 product.image = filename
 
         db.session.commit()
+        # Assuming you have a product instance named 'product'
+        product.log_action('Edited', f"Product '{product.name}' edited successfully.")
+
+
         flash('Product updated successfully.', 'success')
         return redirect(url_for('admin'))
     return render_template('edit_product.html', product=product)
@@ -106,6 +231,11 @@ def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
     db.session.delete(product)
     db.session.commit()
+
+    # Assuming you have a product instance named 'product'
+    product.log_action('Deleted', f"Product '{product.name}' deleted successfully.")
+
+
     flash('Product deleted successfully.', 'success')
     return redirect(url_for('admin'))
 
@@ -130,22 +260,6 @@ def logout():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-class Job(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(500), nullable=False)
-    requirements = db.Column(db.String(500), nullable=False)
-    deadline = db.Column(db.DateTime, nullable=True)
-    is_active = db.Column(db.Boolean, default=True)
-
-    def __init__(self, *args, **kwargs):
-        super(Job, self).__init__(*args, **kwargs)
-        self.check_availability()
-
-    def check_availability(self):
-        if self.deadline and self.deadline < datetime.now():
-            self.is_active = False
-            db.session.commit()
 
 @app.route('/vadmin/add_job', methods=['GET', 'POST'])
 def add_job():
@@ -159,6 +273,8 @@ def add_job():
         db.session.add(job)
         db.session.commit()
 
+        new_job.log_action('Added', f"Job '{title}' added successfully.")
+
         return "Job added successfully!"
 
     return render_template('add_job.html')
@@ -169,24 +285,12 @@ def delete_job(job_id):
     job = Job.query.get(job_id)
     db.session.delete(job)
     db.session.commit()
+
+    job.log_action('Deleted', f"Job '{job.title}' deleted successfully.")
+
     return redirect(url_for('vadmin'))
 
-class AppliedJob(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    job_id = db.Column(db.Integer, nullable=False)
-    first_name = db.Column(db.String(100), nullable=False)  # Add this line
-    father_name = db.Column(db.String(100), nullable=False)  # Add this line
-    applicant_email = db.Column(db.String(100), nullable=False)
-    gender = db.Column(db.String(10), nullable=True)
-    age = db.Column(db.Integer, nullable=True)
-    cv_path = db.Column(db.String(100), nullable=True)
-    
-class Admin(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-
-@app.route('/')
+@app.route('/vacancy')
 def vacancy():
     jobs = Job.query.filter_by(is_active=True).all()
     return render_template('vacancy.html', jobs=jobs)
@@ -246,6 +350,7 @@ def apply(job_id):
         )
         db.session.add(applied_job)
         db.session.commit()
+
         return redirect(url_for('vacancy'))
 
     return render_template('apply.html', job=job, current_time=current_time)
@@ -265,6 +370,9 @@ def delete_applied_job(applied_job_id):
     applied_job = AppliedJob.query.get(applied_job_id)
     db.session.delete(applied_job)
     db.session.commit()
+
+    applied_job.log_action('Deleted', f"Applied job with ID '{applied_job_id}' deleted successfully.")
+
     return redirect(url_for('applied_jobs', job_id=applied_job.job_id))
 
 @app.route('/download_cv/<path:cv_path>')
@@ -289,11 +397,32 @@ news_articles = [
     {"id": 1, "title": "News Article 1", "description": "Lorem ipsum dolor sit amet.", "date": "2024-05-15"},
     {"id": 2, "title": "News Article 2", "description": "Consectetur adipiscing elit.", "date": "2024-05-20"}
 ]
+class Admin(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(100), nullable=False)
 
-@app.route('/all')
-def all_page():
-    return render_template('c.html', events=events, blog_posts=blog_posts, news_articles=news_articles)
 
+@app.route('/bagin', methods=['GET', 'POST'])
+def bagin():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'admin' and password == 'admin':
+            session['admin_logged_in'] = True
+            return redirect(url_for('badmin'))
+        else:
+            flash('Invalid username or password.', 'error')
+    return render_template('bagin.html')
+
+@app.route('/bloog')
+def bloog():
+    return render_template('c.html')
+
+@app.route('/bagout')
+def bagout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('home'))
 # Admin Pages - Main Page
 @app.route('/badmin')
 def badmin():
@@ -309,7 +438,9 @@ def create_blog_post():
         date = datetime.datetime.now().strftime("%Y-%m-%d")
         # Save data to the database or any storage mechanism
         blog_posts.append({"id": len(blog_posts) + 1, "title": title, "description": description, "date": date})
-        return redirect(url_for('blog'))
+
+
+        return redirect(url_for('bloog'))
     return render_template('create_blog_post.html')
 
 @app.route('/admin/blog/edit/<int:id>', methods=['GET', 'POST'])
@@ -319,13 +450,16 @@ def edit_blog_post(id):
         # Handle form submission to edit the blog post
         post['title'] = request.form['title']
         post['description'] = request.form['description']
-        return redirect(url_for('blog'))
+
+        edit_blog_post.log_action('Edited', f"Blog post '{post['title']}' edited successfully.")
+        return redirect(url_for('bloog'))
     return render_template('edit_blog_post.html', post=post)
 
 @app.route('/badmin/blog/delete/<int:id>')
 def delete_blog_post(id):
     blog_posts[:] = [post for post in blog_posts if post.get('id') != id]
-    return redirect(url_for('blog'))
+    delete_blog_post.log_action('Deleted', f"Blog post '{post['title']}' deleted successfully.")
+    return redirect(url_for('bloog'))
 
 # Admin Pages - Events Management
 @app.route('/badmin/events/create', methods=['GET', 'POST'])
@@ -348,13 +482,53 @@ def edit_event(id):
         event['description'] = request.form['description']
         event['date'] = request.form['date']
         event['location'] = request.form['location']
-        # Handle image upload
+        edit_event.log_action('Edited', f"Event '{event['title']}' edited successfully.")
+
     return render_template('edit_event.html', event=event)
 
 @app.route('/badmin/events/delete/<int:id>')
 def delete_event(id):
     events[:] = [event for event in events if event.get('id') != id]
+    delete_event.log_action('Deleted', f"Event '{event['title']}' deleted successfully.")
     return redirect(url_for('events_page'))
+
+@app.route('/sagin/super')
+def super_view():
+    if 'admin_logged_in' not in session or not session['admin_logged_in']:
+        return redirect(url_for('sagin'))
+    
+    actions = ActionHistory.query.order_by(ActionHistory.timestamp.desc()).all()
+    
+    return render_template('all.html', actions=actions)
+
+@app.route('/sagin/delete_action/<int:action_id>', methods=['POST'])
+def delete_action(action_id):
+    if 'admin_logged_in' not in session or not session['admin_logged_in']:
+        return redirect(url_for('sagin'))
+    
+    action = ActionHistory.query.get_or_404(action_id)
+    db.session.delete(action)
+    db.session.commit()
+    flash('Action deleted successfully.', 'success')
+    return redirect(url_for('super_view'))
+
+
+@app.route('/sagin', methods=['GET', 'POST'])
+def sagin():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'admin' and password == 'admin':
+            session['admin_logged_in'] = True
+            return redirect(url_for('super_view'))
+        else:
+            flash('Invalid username or password.', 'error')
+    return render_template('sagin.html')
+
+@app.route('/sagout')
+def sagout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
     with app.app_context():
