@@ -8,6 +8,7 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///amco.db'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
@@ -70,50 +71,38 @@ class AppliedJob(db.Model):
         db.session.add(log_entry)
         db.session.commit()
 
+# Sample BlogPost model
 class BlogPost(db.Model):
+    __tablename__ = 'blog_posts'
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    author = db.Column(db.String(50), nullable=False)
 
-    def log_action(self, action, details):
-        log_entry = ActionHistory(
-            entity_type='BlogPost',
-            entity_id=self.id,
-            action=action,
-            details=details
-        )
-        db.session.add(log_entry)
-        db.session.commit()
+    def __init__(self, title, content, author):
+        self.title = title
+        self.content = content
+        self.author = author
 
 class Event(db.Model):
+    __tablename__ = 'events'
+
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(100), nullable=False)  # Add a description field
+    date = db.Column(db.Date, nullable=False) 
+    location = db.Column(db.String(100), nullable=False)
 
-    def log_action(self, action, details):
-        log_entry = ActionHistory(
-            entity_type='Event',
-            entity_id=self.id,
-            action=action,
-            details=details
-        )
-        db.session.add(log_entry)
-        db.session.commit()
+    def __repr__(self):
+        return f"<Event(title='{self.title}', date='{self.date}', location='{self.location}')>"
 
+# Sample NewsArticle model
 class NewsArticle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    
-    def log_action(self, action, details):
-        log_entry = ActionHistory(
-            entity_type='NewsArticle',
-            entity_id=self.id,
-            action=action,
-            details=details
-        )
-        db.session.add(log_entry)
-        db.session.commit()
+    author = db.Column(db.String(100), nullable=False)
 
 class Job(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -273,7 +262,7 @@ def add_job():
         db.session.add(job)
         db.session.commit()
 
-        new_job.log_action('Added', f"Job '{title}' added successfully.")
+        job.log_action('Added', f"Job '{title}' added successfully.")
 
         return "Job added successfully!"
 
@@ -381,26 +370,21 @@ def download_cv(cv_path):
     filename = os.path.basename(cv_path)
     return send_from_directory(cv_directory, filename, as_attachment=True)
 
-#blog part 
-# Sample data (replace with database implementation)
-blog_posts = [
-    {"id": 1, "title": "First Blog Post", "description": "Lorem ipsum dolor sit amet.", "date": "2024-05-01"},
-    {"id": 2, "title": "Second Blog Post", "description": "Consectetur adipiscing elit.", "date": "2024-05-05"}
-]
-
-events = [
-    {"id": 1, "title": "Event 1", "description": "Lorem ipsum dolor sit amet.", "date": "2024-06-01", "location": "Location 1", "image": "event1.jpg"},
-    {"id": 2, "title": "Event 2", "description": "Consectetur adipiscing elit.", "date": "2024-06-10", "location": "Location 2", "image": "event2.jpg"}
-]
-
-news_articles = [
-    {"id": 1, "title": "News Article 1", "description": "Lorem ipsum dolor sit amet.", "date": "2024-05-15"},
-    {"id": 2, "title": "News Article 2", "description": "Consectetur adipiscing elit.", "date": "2024-05-20"}
-]
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(100), nullable=False)
+
+
+@app.route('/bloog')
+def bloog():
+    # Retrieve data from the database
+    blog_posts = BlogPost.query.all()
+    events = Event.query.all()
+    news_articles = NewsArticle.query.all()
+    # Pass data to the HTML template
+    return render_template('c.html', blog_posts=blog_posts, events=events, news_articles=news_articles)
+
 
 
 @app.route('/bagin', methods=['GET', 'POST'])
@@ -415,82 +399,121 @@ def bagin():
             flash('Invalid username or password.', 'error')
     return render_template('bagin.html')
 
-@app.route('/bloog')
-def bloog():
-    return render_template('c.html')
-
 @app.route('/bagout')
 def bagout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
-# Admin Pages - Main Page
+
 @app.route('/badmin')
 def badmin():
-    return render_template('badmin.html')
+    posts = BlogPost.query.all()  # Retrieve all blog posts
+    articles = NewsArticle.query.all()  # Retrieve all news articles
+    events = Event.query.all()  # Retrieve all events
+    return render_template('badmin.html', posts=posts, articles=articles, events=events)
 
-# Admin Pages - Blog Management
+# Blog post routes
 @app.route('/badmin/blog/create', methods=['GET', 'POST'])
 def create_blog_post():
     if request.method == 'POST':
-        # Handle form submission to create a new blog post
         title = request.form['title']
-        description = request.form['description']
-        date = datetime.datetime.now().strftime("%Y-%m-%d")
-        # Save data to the database or any storage mechanism
-        blog_posts.append({"id": len(blog_posts) + 1, "title": title, "description": description, "date": date})
-
-
-        return redirect(url_for('bloog'))
+        content = request.form['content']
+        author = request.form['author']
+        new_post = BlogPost(title=title, content=content, author=author)
+        db.session.add(new_post)
+        db.session.commit()
+        flash('Blog post created successfully', 'success')
+        return redirect(url_for('badmin'))
     return render_template('create_blog_post.html')
 
-@app.route('/admin/blog/edit/<int:id>', methods=['GET', 'POST'])
+@app.route('/badmin/blog/edit/<int:id>', methods=['GET', 'POST'])
 def edit_blog_post(id):
-    post = next((post for post in blog_posts if post['id'] == id), None)
+    post = BlogPost.query.get(id)
     if request.method == 'POST':
-        # Handle form submission to edit the blog post
-        post['title'] = request.form['title']
-        post['description'] = request.form['description']
-
-        edit_blog_post.log_action('Edited', f"Blog post '{post['title']}' edited successfully.")
-        return redirect(url_for('bloog'))
+        post.title = request.form['title']
+        post.content = request.form['content']
+        post.author = request.form['author']
+        db.session.commit()
+        flash('Blog post updated successfully', 'success')
+        return redirect(url_for('badmin'))  # Changed from 'admin' to 'badmin'
     return render_template('edit_blog_post.html', post=post)
 
-@app.route('/badmin/blog/delete/<int:id>')
+@app.route('/badmin/blog/delete/<int:id>', methods=['POST'])
 def delete_blog_post(id):
-    blog_posts[:] = [post for post in blog_posts if post.get('id') != id]
-    delete_blog_post.log_action('Deleted', f"Blog post '{post['title']}' deleted successfully.")
-    return redirect(url_for('bloog'))
+    post = BlogPost.query.get(id)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Blog post deleted successfully', 'success')
+    return redirect(url_for('badmin')) 
 
-# Admin Pages - Events Management
+# Event routes
 @app.route('/badmin/events/create', methods=['GET', 'POST'])
 def create_event():
     if request.method == 'POST':
         title = request.form['title']
         description = request.form['description']
-        date = request.form['date']
+        date = datetime.strptime(request.form['date'], '%Y-%m-%d')
         location = request.form['location']
-        events.append({"id": len(events) + 1, "title": title, "description": description, "date": date, "location": location})
-        return redirect(url_for('events_page'))
+        new_event = Event(title=title, description=description, date=date, location=location)
+        db.session.add(new_event)
+        db.session.commit()
+        flash('Event created successfully', 'success')
+        return redirect(url_for('badmin'))
     return render_template('create_event.html')
 
 @app.route('/badmin/events/edit/<int:id>', methods=['GET', 'POST'])
 def edit_event(id):
-    event = next((event for event in events if event['id'] == id), None)
+    event = Event.query.get(id)
     if request.method == 'POST':
-        # Handle form submission to edit the event
-        event['title'] = request.form['title']
-        event['description'] = request.form['description']
-        event['date'] = request.form['date']
-        event['location'] = request.form['location']
-        edit_event.log_action('Edited', f"Event '{event['title']}' edited successfully.")
-
+        event.title = request.form['title']
+        event.description = request.form['description']
+        event.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+        event.location = request.form['location']
+        db.session.commit()
+        flash('Event updated successfully', 'success')
+        return redirect(url_for('badmin'))  # Changed from 'admin' to 'badmin'
     return render_template('edit_event.html', event=event)
 
-@app.route('/badmin/events/delete/<int:id>')
+@app.route('/badmin/events/delete/<int:id>', methods=['POST'])
 def delete_event(id):
-    events[:] = [event for event in events if event.get('id') != id]
-    delete_event.log_action('Deleted', f"Event '{event['title']}' deleted successfully.")
-    return redirect(url_for('events_page'))
+    event = Event.query.get(id)
+    db.session.delete(event)
+    db.session.commit()
+    flash('Event deleted successfully', 'success')
+    return redirect(url_for('badmin'))  # Changed from 'admin' to 'badmin'
+
+# News article routes
+@app.route('/badmin/news/create', methods=['GET', 'POST'])
+def create_news_article():
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        author = request.form['author']
+        new_article = NewsArticle(title=title, content=content, author=author)
+        db.session.add(new_article)
+        db.session.commit()
+        flash('News article created successfully', 'success')
+        return redirect(url_for('badmin'))
+    return render_template('create_news_article.html')
+
+@app.route('/badmin/news/edit/<int:id>', methods=['GET', 'POST'])
+def edit_news_article(id):
+    article = NewsArticle.query.get(id)
+    if request.method == 'POST':
+        article.title = request.form['title']
+        article.content = request.form['content']
+        article.author = request.form['author']
+        db.session.commit()
+        flash('News article updated successfully', 'success')
+        return redirect(url_for('badmin'))
+    return render_template('edit_news_article.html', article=article)
+
+@app.route('/badmin/news/delete/<int:id>', methods=['POST'])
+def delete_news_article(id):
+    article = NewsArticle.query.get(id)
+    db.session.delete(article)
+    db.session.commit()
+    flash('News article deleted successfully', 'success')
+    return redirect(url_for('badmin'))
 
 @app.route('/sagin/super')
 def super_view():
@@ -529,6 +552,100 @@ def sagin():
 def sagout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
+
+class TeamMember(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    job_title = db.Column(db.String(50), nullable=False)
+    photo_url = db.Column(db.String(200))
+
+    def __repr__(self):
+        return f"TeamMember(id={self.id}, name='{self.name}', job_title='{self.job_title}')"
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+@app.route('/tagin/team/add', methods=['POST'])
+def add_member():
+    name = request.form['name']
+    
+    if 'job_title' in request.form:
+        job_title = request.form['job_title']
+    else:
+        return "The 'job_title' field is missing from the request.", 400
+    
+    photo = request.files.get('photo')
+
+    if not photo:
+        return 'No file part', 400
+    if photo.filename == '':
+        return 'No selected file', 400
+    if photo and allowed_file(photo.filename):
+        filename = secure_filename(photo.filename)
+        photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        photo.save(photo_path)
+        photo_url = url_for('uploaded_file', filename=filename)
+
+        new_member = TeamMember(name=name, job_title=job_title, photo_url=photo_url)
+        db.session.add(new_member)
+        db.session.commit()
+        return redirect(url_for('team'))
+    else:
+        return 'Invalid file type.', 400
+
+@app.route('/about')
+def about():
+    team_members = TeamMember.query.all()
+    return render_template('about.html', team_members=team_members)
+
+@app.route('/tagin/team/edit/<int:member_id>', methods=['GET', 'POST'])
+def edit_member(member_id):
+    member = TeamMember.query.get(member_id)
+    if request.method == 'POST':
+        member.name = request.form['name']
+        member.job_title = request.form['job_title']
+        photo = request.files.get('photo')
+        if photo and allowed_file(photo.filename):
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+            member.photo_url = url_for('uploaded_file', filename=filename)
+        db.session.commit()
+        return redirect(url_for('team'))
+    return render_template('edit_member.html', member=member)
+
+@app.route('/tagin/team/delete/<int:member_id>', methods=['GET'])
+def delete_member(member_id):
+    member = TeamMember.query.get(member_id)
+    if member:
+        db.session.delete(member)
+        db.session.commit()
+    return redirect(url_for('team'))
+
+@app.route('/tagin', methods=['GET', 'POST'])
+def tagin():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        if username == 'admin' and password == 'admin':
+            session['admin_logged_in'] = True
+            return redirect(url_for('team'))
+        else:
+            return render_template('lagin.html', error='Invalid username or password')
+
+    return render_template('tagin.html')
+
+@app.route('/tagout')
+def tagout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('tagin'))
+
+
+@app.route('/tagin/team')
+def team():
+    team_members = TeamMember.query.all()
+    return render_template('team.html', team_members=team_members)
 
 if __name__ == '__main__':
     with app.app_context():

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <style>/* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
+        }
+        
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+        
+        nav ul li {
+            display: inline;
+            margin: 0 15px;
+        }
+        
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Main Content Styles */
+        main {
+            padding: 2rem;
+        }
+        
+        .about-us {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .about-us h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .about-us p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        /* Team Section Styles */
+        .team {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .team-member {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 1rem;
+            padding: 1rem;
+            text-align: center;
+            flex-basis: calc(33.333% - 2rem);
+            box-sizing: border-box;
+        }
+        
+        .team-member img {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+        
+        .team-member h3 {
+            margin: 0.5rem 0;
+            font-size: 1.2rem;
+        }
+        
+        .team-member p {
+            margin: 0;
+            color: #777;
+        }
+        
+        /* Footer Styles */
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1rem 0;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+        }
+        </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('about') }}">About Us</a></li>
+                <li><a href="{{ url_for('team') }}">Team</a></li>
+                <!-- Add other navigation links as needed -->
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="about-us">
+            <h1>About Us</h1>
+            <p>
+                In 2017 GC, a small company was formed in Ethiopia with a little more than passion and the desire to add something to the Ethiopian construction and interior design landscape. humble corner office, a seed was planted which eventually grew to become the enterprise whose mission entailed beautifying the spaces we reside in whilst productively adding value to customer lifestyle in the process. Today AMCO has been known for its quality and timely delivery for the job we offered, applying the main aim remains true to the initial purpose of creating quality customized living and working spaces. Our portfolio includes executive offices, mixed buildings, residential houses, and a bank. We are also involved in developing smarter office and living spaces – spaces that speak to us intelligently by making use of new insights. This is our contribution to a smarter planet. Changing homes and lives has never been more rewarding.
+            </p>
+            
+            <h2>Meet Our Team</h2> <!-- Moved "Meet Our Team" heading here -->
+            
+            <div class="team">
+                {% for member in team_members %}
+                <div class="team-member">
+                    <img src="{{ member.photo_url }}" alt="{{ member.name }}">
+                    <h3>{{ member.name }}</h3>
+                    <p>{{ member.job_title }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+    
+</body>
+</html>
